@@ -183,4 +183,59 @@ component displayname="notifuse" output="false" accessors="true" {
 		return results;
 	}
 
+	// /contacts.upsert
+	public struct function contactsUpsert( required string workspace_id, required struct contact ) {
+        var results = {
+			'email' = '',
+			'action' = '',
+			'error' = ''
+		};
+        var options = {};
+
+        options[ 'workspace_id' ] = arguments.workspace_id;
+		options[ 'contact' ] = {};
+
+		// Required field
+		options.contact[ 'email' ] = arguments.contact.email;
+
+		// Optional string fields
+		if ( arguments.contact.keyExists( 'external_id' ) ) options.contact[ 'external_id' ] = arguments.contact.external_id;
+		if ( arguments.contact.keyExists( 'timezone' ) ) options.contact[ 'timezone' ] = arguments.contact.timezone;
+		if ( arguments.contact.keyExists( 'language' ) ) options.contact[ 'language' ] = arguments.contact.language;
+		if ( arguments.contact.keyExists( 'first_name' ) ) options.contact[ 'first_name' ] = arguments.contact.first_name;
+		if ( arguments.contact.keyExists( 'last_name' ) ) options.contact[ 'last_name' ] = arguments.contact.last_name;
+		if ( arguments.contact.keyExists( 'full_name' ) ) options.contact[ 'full_name' ] = arguments.contact.full_name;
+		if ( arguments.contact.keyExists( 'phone' ) ) options.contact[ 'phone' ] = arguments.contact.phone;
+		if ( arguments.contact.keyExists( 'address_line_1' ) ) options.contact[ 'address_line_1' ] = arguments.contact.address_line_1;
+		if ( arguments.contact.keyExists( 'address_line_2' ) ) options.contact[ 'address_line_2' ] = arguments.contact.address_line_2;
+		if ( arguments.contact.keyExists( 'country' ) ) options.contact[ 'country' ] = arguments.contact.country;
+		if ( arguments.contact.keyExists( 'postcode' ) ) options.contact[ 'postcode' ] = arguments.contact.postcode;
+		if ( arguments.contact.keyExists( 'state' ) ) options.contact[ 'state' ] = arguments.contact.state;
+		if ( arguments.contact.keyExists( 'job_title' ) ) options.contact[ 'job_title' ] = arguments.contact.job_title;
+
+		// Custom string fields (1-5)
+		for ( var i = 1; i <= 5; i++ ) {
+			if ( arguments.contact.keyExists( 'custom_string_#i#' ) ) options.contact[ 'custom_string_#i#' ] = arguments.contact[ 'custom_string_#i#' ];
+		}
+
+		// Custom number fields (1-5)
+		for ( var i = 1; i <= 5; i++ ) {
+			if ( arguments.contact.keyExists( 'custom_number_#i#' ) ) options.contact[ 'custom_number_#i#' ] = arguments.contact[ 'custom_number_#i#' ];
+		}
+
+		// Custom datetime fields (1-5)
+		for ( var i = 1; i <= 5; i++ ) {
+			if ( arguments.contact.keyExists( 'custom_datetime_#i#' ) ) options.contact[ 'custom_datetime_#i#' ] = arguments.contact[ 'custom_datetime_#i#' ];
+		}
+
+		// Custom JSON fields (1-5)
+		for ( var i = 1; i <= 5; i++ ) {
+			if ( arguments.contact.keyExists( 'custom_json_#i#' ) ) options.contact[ 'custom_json_#i#' ] = arguments.contact[ 'custom_json_#i#' ];
+		}
+
+        structAppend( results, postAPI( 'contacts', 'upsert', options ) );
+
+        return results;
+    }
+
 }
