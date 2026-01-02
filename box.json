@@ -1,0 +1,55 @@
+{
+    "name":"Notifuse CFML",
+    "version":"0.1.0",
+    "author":"Lutz Lesener",
+    "location":"blackbucksoftware/notifuse-cfml#v0.1.0",
+    "homepage":"https://github.com/blackbucksoftware/notifuse-cfml",
+    "documentation":"",
+    "repository":{
+        "type":"git",
+        "URL":"https://github.com/blackbucksoftware/notifuse-cfml"
+    },
+    "bugs":"https://github.com/blackbucksoftware/notifuse-cfml/issues",
+    "slug":"notifusecfml",
+    "shortDescription":"Notifuse CFML is a CFML (Lucee and ColdFusion) library for interacting with the Notifuse API.",
+    "description":"",
+    "instructions":"",
+    "changelog":"",
+    "type":"modules",
+    "keywords":[
+        "notifuse",
+        "api"
+    ],
+    "private":false,
+    "projectURL":"",
+    "license":[
+        {
+            "type":"MIT",
+            "URL":"https://github.com/blackbucksoftware/notifuse-cfml/blob/master/LICENSE"
+        }
+    ],
+    "contributors":[
+        "faxi05"
+    ],
+    "dependencies":{},
+    "devDependencies":{
+        "testbox":"^6.0.0",
+        "coldbox":"^8.0.0"
+    },
+    "installPaths":{
+        "testbox":"testbox/",
+        "coldbox":"tests/resources/app/coldbox/"
+    },
+    "scripts":{
+        "format":"cfformat run handlers/**/*.cfc,lib/**/*.cfc,tests/specs/**/*.cfc,ModuleConfig.cfc,stripe.cfc,task.cfc --overwrite",
+        "format:check":"cfformat check handlers/**/*.cfc,lib/**/*.cfc,tests/specs/**/*.cfc,ModuleConfig.cfc,stripe.cfc,task.cfc"
+    },
+    "ignore":[
+        "**/.*",
+        "tests"
+    ],
+    "testbox":{
+        "runner":"http://127.0.0.1:45000/tests/runner.cfm",
+        "tests_root":""
+    }
+}
