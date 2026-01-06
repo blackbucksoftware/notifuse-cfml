@@ -45,21 +45,69 @@ component displayname="notifuse.cfc" output="false" accessors="true" {
 	// /transactional
 
 	// /transactional.send
-	public struct function transactionalSend( required string workspace_id, required string id, required struct contact, array channels = ['email'] ) {
+	public struct function transactionalSend(
+		required string workspace_id,
+		required string id,
+		required struct contact,
+		array channels = ['email'],
+		string external_id,
+		struct data,
+		struct metadata,
+		struct email_options
+	) {
         var params = {};
 
         params[ 'workspace_id' ] = arguments.workspace_id;
 		params[ 'notification' ] = {};
 		params.notification[ 'id' ] = arguments.id;
 
+		// Contact object - required email field
 		params.notification[ 'contact' ] = {};
-		params.notification.contact[ 'email' ] = arguments.contact.email;
-
+		params.notification[ 'contact' ] = processContact( arguments.contact );
 		params.notification[ 'channels' ] = arguments.channels;
 
-        // structAppend( results, postAPI( 'transactional', 'send', options ) );
+		// Optional notification-level fields
+		if ( !isNull( arguments.external_id ) && len( arguments.external_id ) ) {
+			params.notification[ 'external_id' ] = arguments.external_id;
+		}
 
-        // return results;
+		if ( !isNull( arguments.data ) && !arguments.data.isEmpty() ) {
+			params.notification[ 'data' ] = arguments.data;
+		}
+
+		if ( !isNull( arguments.metadata ) && !arguments.metadata.isEmpty() ) {
+			params.notification[ 'metadata' ] = arguments.metadata;
+		}
+
+		if ( !isNull( arguments.email_options ) && !arguments.email_options.isEmpty() ) {
+			params.notification[ 'email_options' ] = {};
+
+			if ( arguments.email_options.keyExists( 'from_name' ) ) {
+				params.notification.email_options[ 'from_name' ] = arguments.email_options.from_name;
+			}
+			if ( arguments.email_options.keyExists( 'cc' ) ) {
+				params.notification.email_options[ 'cc' ] = listToArray( arguments.email_options.cc );
+			}
+			if ( arguments.email_options.keyExists( 'bcc' ) ) {
+				params.notification.email_options[ 'bcc' ] = listToArray( arguments.email_options.bcc );
+			}
+			if ( arguments.email_options.keyExists( 'reply_to' ) ) {
+				params.notification.email_options[ 'reply_to' ] = arguments.email_options.reply_to;
+			}
+			if ( arguments.email_options.keyExists( 'attachments' ) && isArray( arguments.email_options.attachments ) ) {
+				params.notification.email_options[ 'attachments' ] = [];
+				arrayEach(arguments.email_options.attachments, function(element,index) {
+					if ( element.keyExists('content') && element.keyExists('filename') && element.keyExists('content_type') ) {
+						params.notification.email_options[ 'attachments' ].append( {
+							'content' : element.content,
+							'filename' : element.filename,
+							'content_type' : element.content_type
+						} );
+					}
+				});
+			}
+		}
+		// writedump(var=params,label="Params"); abort;
 		return apiCall( 'POST', '/transactional.send', {}, params, {} );
     }
 
@@ -128,51 +176,195 @@ component displayname="notifuse.cfc" output="false" accessors="true" {
 	// /contacts.upsert
 	public struct function contactsUpsert( required string workspace_id, required struct contact ) {
         var params = {};
-
         params[ 'workspace_id' ] = arguments.workspace_id;
-		params[ 'contact' ] = {};
-
-		// Required field
-		params.contact[ 'email' ] = arguments.contact.email;
-
-		// Optional string fields
-		if ( arguments.contact.keyExists( 'external_id' ) ) params.contact[ 'external_id' ] = arguments.contact.external_id;
-		if ( arguments.contact.keyExists( 'timezone' ) ) params.contact[ 'timezone' ] = arguments.contact.timezone;
-		if ( arguments.contact.keyExists( 'language' ) ) params.contact[ 'language' ] = arguments.contact.language;
-		if ( arguments.contact.keyExists( 'first_name' ) ) params.contact[ 'first_name' ] = arguments.contact.first_name;
-		if ( arguments.contact.keyExists( 'last_name' ) ) params.contact[ 'last_name' ] = arguments.contact.last_name;
-		if ( arguments.contact.keyExists( 'full_name' ) ) params.contact[ 'full_name' ] = arguments.contact.full_name;
-		if ( arguments.contact.keyExists( 'phone' ) ) params.contact[ 'phone' ] = arguments.contact.phone;
-		if ( arguments.contact.keyExists( 'address_line_1' ) ) params.contact[ 'address_line_1' ] = arguments.contact.address_line_1;
-		if ( arguments.contact.keyExists( 'address_line_2' ) ) params.contact[ 'address_line_2' ] = arguments.contact.address_line_2;
-		if ( arguments.contact.keyExists( 'country' ) ) params.contact[ 'country' ] = arguments.contact.country;
-		if ( arguments.contact.keyExists( 'postcode' ) ) params.contact[ 'postcode' ] = arguments.contact.postcode;
-		if ( arguments.contact.keyExists( 'state' ) ) params.contact[ 'state' ] = arguments.contact.state;
-		if ( arguments.contact.keyExists( 'job_title' ) ) params.contact[ 'job_title' ] = arguments.contact.job_title;
-
-		// Custom string fields (1-5)
-		for ( var i = 1; i <= 5; i++ ) {
-			if ( arguments.contact.keyExists( 'custom_string_#i#' ) ) params.contact[ 'custom_string_#i#' ] = arguments.contact[ 'custom_string_#i#' ];
-		}
-
-		// Custom number fields (1-5)
-		for ( var i = 1; i <= 5; i++ ) {
-			if ( arguments.contact.keyExists( 'custom_number_#i#' ) ) params.contact[ 'custom_number_#i#' ] = arguments.contact[ 'custom_number_#i#' ];
-		}
-
-		// Custom datetime fields (1-5)
-		for ( var i = 1; i <= 5; i++ ) {
-			if ( arguments.contact.keyExists( 'custom_datetime_#i#' ) ) params.contact[ 'custom_datetime_#i#' ] = arguments.contact[ 'custom_datetime_#i#' ];
-		}
-
-		// Custom JSON fields (1-5)
-		for ( var i = 1; i <= 5; i++ ) {
-			if ( arguments.contact.keyExists( 'custom_json_#i#' ) ) params.contact[ 'custom_json_#i#' ] = arguments.contact[ 'custom_json_#i#' ];
-		}
-
-        // structAppend( results, postAPI( 'contacts', 'upsert', options ) );
+		params[ 'contact' ] = processContact( arguments.contact );
 		return apiCall( 'POST', '/contacts.upsert', {}, params, {} );
     }
+
+	// /contacts.getByEmail
+	public struct function contactsGetByEmail( required string workspace_id, required string email ) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'email' ] = arguments.email;
+		return apiCall( 'GET', '/contacts.getByEmail', params, {}, {} );
+	}
+
+	// /contacts.getByExternalId
+	public struct function contactsGetByExternalId( required string workspace_id, required string external_id ) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'external_id' ] = arguments.external_id;
+		return apiCall( 'GET', '/contacts.getByExternalId', params, {}, {} );
+	}
+
+	// /contacts.import
+	public struct function contactsBatchImport( required string workspace_id, required array contacts, array subscribe_to_lists ) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'contacts' ] = [];
+
+		// Process each contact in the array
+		for ( var contact in arguments.contacts ) {
+			var processedContact = processContact( contact );
+
+			
+			params.contacts.append( processedContact );
+		}
+
+		// Optional subscribe_to_lists parameter
+		if ( !isNull( arguments.subscribe_to_lists ) && arguments.subscribe_to_lists.len() ) {
+			params[ 'subscribe_to_lists' ] = arguments.subscribe_to_lists;
+		}
+
+		return apiCall( 'POST', '/contacts.import', {}, params, {} );
+	}
+
+	// /contacts.delete
+	public struct function contactsDelete( required string workspace_id, required string email ) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'email' ] = arguments.email;
+		return apiCall( 'POST', '/contacts.delete', {}, params, {} );
+	}	
+
+
+	// Contact Lists
+	// contactLists.updateStatus
+	public struct function contactListsUpdateStatus( required string workspace_id, required string list_id, required string email, required string status ) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'list_id' ] = arguments.list_id;
+		params[ 'email' ] = arguments.email;
+		if ( listFindNoCase( 'active,pending,unsubscribed,bounced,complained', arguments.status ) ) {
+			params[ 'status' ] = arguments.status;
+		}
+		return apiCall( 'POST', '/contactLists.updateStatus', {}, params, {} );
+	}
+
+	// subscribe
+	public struct function subscribe( required string workspace_id, required struct contact, required string list_ids) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'list_id' ] = listToArray( arguments.list_ids );
+		params[ 'contact' ] = processContact( arguments.contact );
+		return apiCall( 'POST', '/subscribe', {}, params, {} );
+	}
+
+	// lists.subscribe
+	public struct function listsSubscribe( required string workspace_id, required struct contact, required string list_ids) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'list_id' ] = listToArray( arguments.list_ids );
+		params[ 'contact' ] = processContact( arguments.contact );
+		return apiCall( 'POST', '/lists.subscribe', {}, params, {} );
+	}
+
+	// Custom Events
+
+	// /customEvents.import	
+
+	// Broadcasts
+	// /broadcasts.list
+	public struct function broadcastsList( required string workspace_id, string status, numeric limit = 50, numeric offset = 0, bool with_templates = false) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		
+		if ( listFindNoCase( 'draft,scheduled,sending,paused,sent,cancelled,failed,testing,test_completed,winner_selected', arguments.status ) ) {
+			params[ 'status' ] = arguments.status;
+		}
+		params[ 'limit' ] = arguments.limit;
+		params[ 'offset' ] = arguments.offset;
+		params[ 'with_templates' ] = arguments.with_templates;
+		return apiCall( 'GET', '/broadcasts.list', params, {}, {} );
+	}
+
+	// /broadcasts.get
+	public struct function broadcastsGet( required string workspace_id, required string id, bool with_templates = false) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'id' ] = arguments.id;
+		params[ 'with_templates' ] = arguments.with_templates;
+		return apiCall( 'GET', '/broadcasts.get', params, {}, {} );
+	}
+
+	// /broadcasts.create
+	public struct function broadcastsCreate( required string workspace_id, required string name, required struct audience, struct test_settings = {}, bool tracking_enabled = false, struct utm_parameters = {}, struct metadata = {} ) {
+		var params = {};
+		params[ 'workspace_id' ] = arguments.workspace_id;
+		params[ 'name' ] = left(trim(arguments.name), 255);
+
+		// Audience object - required list field
+		params[ 'audience' ] = {};
+		if ( arguments.audience.keyExists( 'list' ) ) {
+			params.audience[ 'list' ] = arguments.audience.list;
+		}
+		if ( arguments.audience.keyExists( 'segments' ) ) ) {
+			params.audience[ 'segments' ] = listToArray(arguments.audience.segments);
+		}
+		if ( arguments.audience.keyExists( 'exclude_unsubscribed' ) && isBoolean( arguments.audience.exclude_unsubscribed ) ) {
+			params.audience[ 'exclude_unsubscribed' ] = arguments.audience.exclude_unsubscribed;
+		}
+
+		// Test settings
+		if ( !isNull( arguments.test_settings ) && !arguments.test_settings.isEmpty() ) {
+			params[ 'test_settings' ] = {};
+
+			if ( arguments.test_settings.keyExists( 'enabled' ) ) {
+				params.test_settings[ 'enabled' ] = arguments.test_settings.enabled;
+			}
+			if ( arguments.test_settings.keyExists( 'sample_percentage' ) ) {
+				params.test_settings[ 'sample_percentage' ] = arguments.test_settings.sample_percentage;
+			}
+			if ( arguments.test_settings.keyExists( 'auto_send_winner' ) ) {
+				params.test_settings[ 'auto_send_winner' ] = arguments.test_settings.auto_send_winner;
+			}
+			if ( arguments.test_settings.keyExists( 'auto_send_winner_metric' ) ) {
+				params.test_settings[ 'auto_send_winner_metric' ] = arguments.test_settings.auto_send_winner_metric;
+			}
+			if ( arguments.test_settings.keyExists( 'test_duration_hours' ) ) {
+				params.test_settings[ 'test_duration_hours' ] = arguments.test_settings.test_duration_hours;
+			}
+			if ( arguments.test_settings.keyExists( 'variations' ) && isArray( arguments.test_settings.variations ) ) {
+				params.test_settings[ 'variations' ] = arguments.test_settings.variations;
+			}
+		}
+
+		// Tracking enabled
+		if ( !isNull( arguments.tracking_enabled ) ) {
+			params[ 'tracking_enabled' ] = arguments.tracking_enabled;
+		}
+
+		// UTM parameters
+		if ( !isNull( arguments.utm_parameters ) && !arguments.utm_parameters.isEmpty() ) {
+			params[ 'utm_parameters' ] = {};
+
+			if ( arguments.utm_parameters.keyExists( 'source' ) ) {
+				params.utm_parameters[ 'source' ] = arguments.utm_parameters.source;
+			}
+			if ( arguments.utm_parameters.keyExists( 'medium' ) ) {
+				params.utm_parameters[ 'medium' ] = arguments.utm_parameters.medium;
+			}
+			if ( arguments.utm_parameters.keyExists( 'campaign' ) ) {
+				params.utm_parameters[ 'campaign' ] = arguments.utm_parameters.campaign;
+			}
+			if ( arguments.utm_parameters.keyExists( 'term' ) ) {
+				params.utm_parameters[ 'term' ] = arguments.utm_parameters.term;
+			}
+			if ( arguments.utm_parameters.keyExists( 'content' ) ) {
+				params.utm_parameters[ 'content' ] = arguments.utm_parameters.content;
+			}
+		}
+
+		// Metadata
+		if ( !isNull( arguments.metadata ) && !arguments.metadata.isEmpty() ) {
+			params[ 'metadata' ] = arguments.metadata;
+		}
+
+		return apiCall( 'POST', '/broadcasts.create', {}, params, {} );
+	}
+
+
+
 
 
 	private struct function apiCall(
@@ -331,5 +523,50 @@ component displayname="notifuse.cfc" output="false" accessors="true" {
   private numeric function returnUnixTimestamp( required any dateToConvert ) {
     return dateDiff( "s", variables.utcBaseDate, dateToConvert );
   }
+
+  private struct function processContact( required struct contact ) {
+	var processedContact = {};
+
+	// Required field
+	processedContact[ 'email' ] = contact.email;
+
+	// Optional string fields
+	if ( contact.keyExists( 'external_id' ) ) processedContact[ 'external_id' ] = contact.external_id;
+	if ( contact.keyExists( 'timezone' ) ) processedContact[ 'timezone' ] = contact.timezone;
+	if ( contact.keyExists( 'language' ) ) processedContact[ 'language' ] = contact.language;
+	if ( contact.keyExists( 'first_name' ) ) processedContact[ 'first_name' ] = contact.first_name;
+	if ( contact.keyExists( 'last_name' ) ) processedContact[ 'last_name' ] = contact.last_name;
+	if ( contact.keyExists( 'full_name' ) ) processedContact[ 'full_name' ] = contact.full_name;
+	if ( contact.keyExists( 'phone' ) ) processedContact[ 'phone' ] = contact.phone;
+	if ( contact.keyExists( 'address_line_1' ) ) processedContact[ 'address_line_1' ] = contact.address_line_1;
+	if ( contact.keyExists( 'address_line_2' ) ) processedContact[ 'address_line_2' ] = contact.address_line_2;
+	if ( contact.keyExists( 'country' ) ) processedContact[ 'country' ] = contact.country;
+	if ( contact.keyExists( 'postcode' ) ) processedContact[ 'postcode' ] = contact.postcode;
+	if ( contact.keyExists( 'state' ) ) processedContact[ 'state' ] = contact.state;
+	if ( contact.keyExists( 'job_title' ) ) processedContact[ 'job_title' ] = contact.job_title;
+
+	// Custom string fields (1-5)
+	for ( var i = 1; i <= 5; i++ ) {
+		if ( arguments.contact.keyExists( 'custom_string_#i#' ) ) processedContact[ 'custom_string_#i#' ] = arguments.contact[ 'custom_string_#i#' ];
+	}
+
+	// Custom number fields (1-5)
+	for ( var i = 1; i <= 5; i++ ) {
+		if ( arguments.contact.keyExists( 'custom_number_#i#' ) ) processedContact[ 'custom_number_#i#' ] = arguments.contact[ 'custom_number_#i#' ];
+	}
+
+	// Custom datetime fields (1-5)
+	for ( var i = 1; i <= 5; i++ ) {
+		if ( arguments.contact.keyExists( 'custom_datetime_#i#' ) ) processedContact[ 'custom_datetime_#i#' ] = arguments.contact[ 'custom_datetime_#i#' ];
+	}
+
+	// Custom JSON fields (1-5)
+	for ( var i = 1; i <= 5; i++ ) {
+		if ( arguments.contact.keyExists( 'custom_json_#i#' ) ) processedContact[ 'custom_json_#i#' ] = arguments.contact[ 'custom_json_#i#' ];
+	}
+
+	return processedContact;
+  }
+
 
 }

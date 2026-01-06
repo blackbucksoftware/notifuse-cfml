@@ -2,18 +2,18 @@
 component extends="testbox.system.BaseSpec" {
 
     function run() {
-        
-        describe( 'The wrapper', function() {
-            
+
+        describe( 'Transactional Notifications...', function() {
+
             var notifuse = new notifuse( 'fake_key', 'https://demo.notifuse.com/' );
-            var httpService = getProperty( notifuse, 'httpService' );
-            prepareMock( httpService );
-            httpService.$(
-                'exec',
+            prepareMock( notifuse );
+
+            // Mock the makeHttpRequest method to capture calls and return a mock response
+            notifuse.$(
+                'makeHttpRequest',
                 {
                     responseHeader: {
-                        'Content-Type': 'application/json',
-                        'Request-Id': ''
+                        'Content-Type': 'application/json'
                     },
                     statuscode: '200 OK',
                     filecontent: '{}'
@@ -21,30 +21,33 @@ component extends="testbox.system.BaseSpec" {
             );
 
             afterEach( function() {
-                httpService.$reset();
+                notifuse.$reset( 'makeHttpRequest' );
             } );
 
-            it( 'can make a POST request to send a message', function() {
-                var res = notifuse.transactionalSend( workspace_id = 'my_ws', id = 'my_transactional_template', contact = { email = "test@example.com" });
-                
-                // Verify the HTTP request was made correctly
-                var httpRequest = httpService.$callLog().exec[ 1 ][ 1 ];
-                expect( httpRequest.method ).toBe( 'POST' );
-                expect( httpRequest.url ).toInclude( '/transactional.send' );
-                
-                // Verify request body contains expected data
-                expect( httpRequest.body ).toInclude( 'my_ws' );
-                expect( httpRequest.body ).toInclude( 'my_transactional_template' );
-                expect( httpRequest.body ).toInclude( 'test@example.com' );
+            it( 'can send a basic transactional notification', function() {
+                var res = notifuse.transactionalSend(
+                    workspace_id = 'my_ws',
+                    id = 'my_transactional_template',
+                    contact = { email = "test@example.com" }
+                );
+
+                var mockCallLog = notifuse.$callLog().makeHttpRequest;
+                expect( mockCallLog ).toHaveLength( 1 );
+
+                var httpRequest = mockCallLog[ 1 ];
+                expect( httpRequest.httpMethod ).toBe( 'POST' );
+                expect( httpRequest.path ).toInclude( '/transactional.send' );
+
+                // body is already a struct, no need to deserialize
+                expect( httpRequest.body.workspace_id ).toBe( 'my_ws' );
+                expect( httpRequest.body.notification.id ).toBe( 'my_transactional_template' );
+                expect( httpRequest.body.notification.contact.email ).toBe( 'test@example.com' );
+                expect( httpRequest.body.notification.channels[ 1 ] ).toBe( 'email' );
             } );
 
         } );
 
-        
-    }
 
-    private function sum( a, b ){
-            return a + b;
-        }
+    }
 
 }
