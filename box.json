@@ -41,8 +41,8 @@
         "coldbox":"tests/resources/app/coldbox/"
     },
     "scripts":{
-        "format":"cfformat run handlers/**/*.cfc,lib/**/*.cfc,tests/specs/**/*.cfc,ModuleConfig.cfc,stripe.cfc,task.cfc --overwrite",
-        "format:check":"cfformat check handlers/**/*.cfc,lib/**/*.cfc,tests/specs/**/*.cfc,ModuleConfig.cfc,stripe.cfc,task.cfc"
+        "format":"cfformat run handlers/**/*.cfc,lib/**/*.cfc,tests/specs/**/*.cfc,ModuleConfig.cfc,notifuse.cfc,task.cfc --overwrite",
+        "format:check":"cfformat check handlers/**/*.cfc,lib/**/*.cfc,tests/specs/**/*.cfc,ModuleConfig.cfc,notifuse.cfc,task.cfc"
     },
     "ignore":[
         "**/.*",

@@ -303,6 +303,8 @@ component displayname="notifuse.cfc" output="false" accessors="true" {
 		}
 		if ( arguments.audience.keyExists( 'exclude_unsubscribed' ) && isBoolean( arguments.audience.exclude_unsubscribed ) ) {
 			params.audience[ 'exclude_unsubscribed' ] = arguments.audience.exclude_unsubscribed;
+		} else {
+			params.audience[ 'exclude_unsubscribed' ] = true;
 		}
 
 		// Test settings
@@ -312,20 +314,30 @@ component displayname="notifuse.cfc" output="false" accessors="true" {
 			if ( arguments.test_settings.keyExists( 'enabled' ) ) {
 				params.test_settings[ 'enabled' ] = arguments.test_settings.enabled;
 			}
-			if ( arguments.test_settings.keyExists( 'sample_percentage' ) ) {
+			if ( arguments.test_settings.keyExists( 'sample_percentage' ) && isNumeric( arguments.test_settings.sample_percentage ) ) {
 				params.test_settings[ 'sample_percentage' ] = arguments.test_settings.sample_percentage;
 			}
-			if ( arguments.test_settings.keyExists( 'auto_send_winner' ) ) {
+			if ( arguments.test_settings.keyExists( 'auto_send_winner' ) && isBoolean( arguments.test_settings.auto_send_winner ) ) {
 				params.test_settings[ 'auto_send_winner' ] = arguments.test_settings.auto_send_winner;
 			}
 			if ( arguments.test_settings.keyExists( 'auto_send_winner_metric' ) ) {
-				params.test_settings[ 'auto_send_winner_metric' ] = arguments.test_settings.auto_send_winner_metric;
+				if ( listFindNoCase( 'open_rate,click_rate', arguments.test_settings.auto_send_winner_metric ) ) {
+					params.test_settings[ 'auto_send_winner_metric' ] = arguments.test_settings.auto_send_winner_metric;
+				}
 			}
-			if ( arguments.test_settings.keyExists( 'test_duration_hours' ) ) {
+			if ( arguments.test_settings.keyExists( 'test_duration_hours' ) && isNumeric( arguments.test_settings.test_duration_hours ) ) {
 				params.test_settings[ 'test_duration_hours' ] = arguments.test_settings.test_duration_hours;
 			}
 			if ( arguments.test_settings.keyExists( 'variations' ) && isArray( arguments.test_settings.variations ) ) {
-				params.test_settings[ 'variations' ] = arguments.test_settings.variations;
+				if ( arguments.test_settings.variations.len() >= 2 && arguments.test_settings.variations.len() <= 8 ) {
+					params.test_settings[ 'variations' ] = [];
+					arrayEach(arguments.test_settings.variations, function(element,index) {
+						if ( element.keyExists('template_id') ) {
+							// we are assuming the element is valid
+							params.test_settings[ 'variations' ].append( element )
+						};
+					});
+				}
 			}
 		}
 
@@ -362,6 +374,8 @@ component displayname="notifuse.cfc" output="false" accessors="true" {
 
 		return apiCall( 'POST', '/broadcasts.create', {}, params, {} );
 	}
+
+	
 
 
 
