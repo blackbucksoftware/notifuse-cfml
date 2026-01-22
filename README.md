@@ -1,6 +1,6 @@
 # notifuse-cfml
 
-**notifuse-cfml** is a CFML library for interacting with the Notifuse API. [Notifuse](https://notifuse.com) is a modern, self-hosted emailing platform that allows you to send newsletters and transactional emails. 
+**notifuse-cfml** is a CFML library for interacting with the Notifuse API. [Notifuse](https://notifuse.com) is a modern, self-hosted emailing platform that allows you to send newsletters and transactional emails. It can use plain SMTP or integrate with third-party email delivery services like Amazon SES, SendGrid, Postmark, and others.
 
 ## Installation
 This wrapper can be installed as standalone library or as a ColdBox Module. Either approach requires a simple CommandBox command:
@@ -44,7 +44,7 @@ property name="notifuse" inject="notifuse@notifusecfml";
 ## Getting Started
 
 ```
-<!--- Send a transactional message --->
+<!--- Send a simple transactional message --->
 <cfscript>
 	x = notifuse.transactionalSend(
 		workspace_id = 'my_workspace',
@@ -54,8 +54,27 @@ property name="notifuse" inject="notifuse@notifusecfml";
 		},
 		data = {
 			'greeting' = 'Hi Tom',
-			'password' = 'secret1234!',
-			'user' = 'tom45'
+		}
+	);
+</cfscript>
+```
+
+```
+<!--- Send a transactional message with more contact details, data to be used in the template, and a file attachment --->
+<cfscript>
+	x = notifuse.transactionalSend(
+		workspace_id = 'my_workspace',
+		id = 'another_template',
+		contact = {
+			email = 'tom@test.com',
+			first_name = 'Tom',
+			last_name = 'Thompson',
+			external_id = 'user_12345'
+		},
+		data = {
+			'greeting' = 'Hi Tom',
+			'interested_in' = 'eBikes',
+			'company_contact' = 'Stacey'
 		},
 		email_options = {
 			attachments = [
