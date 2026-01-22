@@ -298,7 +298,7 @@ component displayname="notifuse.cfc" output="false" accessors="true" {
 		if ( arguments.audience.keyExists( 'list' ) ) {
 			params.audience[ 'list' ] = arguments.audience.list;
 		}
-		if ( arguments.audience.keyExists( 'segments' ) ) ) {
+		if ( arguments.audience.keyExists( 'segments' ) ) {
 			params.audience[ 'segments' ] = listToArray(arguments.audience.segments);
 		}
 		if ( arguments.audience.keyExists( 'exclude_unsubscribed' ) && isBoolean( arguments.audience.exclude_unsubscribed ) ) {
