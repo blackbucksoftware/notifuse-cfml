@@ -1,6 +1,6 @@
 component displayname="notifuse.cfc" output="false" accessors="true" { 
  	
-	variables._notifusecfc_version = '0.1.0';
+	variables._notifusecfc_version = '0.1.2';
 
 	public any function init(
 		string apiKey = '',
