@@ -254,7 +254,7 @@ component displayname="notifuse.cfc" output="false" accessors="true" {
 	public struct function listsSubscribe( required string workspace_id, required struct contact, required string list_ids) {
 		var params = {};
 		params[ 'workspace_id' ] = arguments.workspace_id;
-		params[ 'list_id' ] = listToArray( arguments.list_ids );
+		params[ 'list_ids' ] = listToArray( arguments.list_ids );
 		params[ 'contact' ] = processContact( arguments.contact );
 		return apiCall( 'POST', '/lists.subscribe', {}, params, {} );
 	}
